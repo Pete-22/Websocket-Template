@@ -3,7 +3,10 @@
 * 
  
 * The program works in the following way:
- 
+- When the program is launched, you are prompted to input the IP address of the Websocket server
+- After a connection to the server has been made, the program will wait for a Start message (if that is what you want)
+- Once the start message has been recieved, the program will start to send data
+-A pause message can be sent to the client from the server if you want to pause sending data
 
 * Things to note: 
 	
@@ -46,22 +49,13 @@ bool disconnected = true;	//If we are disconnected from server
 int retries = 0;			//If connection to server is lost we save the number of retries we do, exit program after x retries
 bool start = false;			//Value that is checked before we start to send data
 bool stop = false;			//Value that is checked each iteration, true if we want to stop the client
-bool paused = false;			//Value that is checked each iteratino, true if we want to pause the data being sent
+bool paused = false;		//Value that is checked each iteratino, true if we want to pause the data being sent
 
 ///Time varibles///
 boost::posix_time::ptime time_start;		//When to start couting toeards the wait time
 boost::posix_time::ptime time_end;			//Used to compare/determine how long time has passed
 boost::posix_time::time_duration diff;		//The time difference betweene time_start and time_end
 
-///Global variables///
-
-///Parameters, received from NI Mate (the server)///
-unsigned long frequency_param; 
-int duration_param;
-int pattern_param;
-int intensity_param;
-
-///Declaring functions///
 
 ///Classes for websocket communication///
 /*
@@ -107,7 +101,7 @@ public:
     m_error_reason = s.str();
 	}
 
-	void on_message(websocketpp::connection_hdl, client::message_ptr msg) {
+	void on_message(websocketpp::connection_hdl, client::message_ptr msg) {		//Class that handles recieved messages
 		//std::cout << msg->get_payload().c_str() << std::endl;					//Use if you need to debug received messages
         if (msg->get_opcode() == websocketpp::frame::opcode::text) {
 			std::string incoming_msg = msg->get_payload(); 						//Convert to string
@@ -317,7 +311,7 @@ int main(int argc, char *argv[]) {
 
 	boost::this_thread::sleep(boost::posix_time::seconds(2));	//Wait for connection
 
-	///Initial contact with websocket server (NI MATE)///
+	///Initial contact with websocket server///
 
 	///Initial JSON message template that will be sent to the Server, Just as an example///
 	char Json[] = R"({
@@ -350,23 +344,23 @@ int main(int argc, char *argv[]) {
 
 	///Main loop, polls data and sends it to websocket server///
 
-	while(!start) {								//Wait for server to send start command
+	while(!start) {								//Wait for server to send start command, remove if you want to send data without waiting for a start message
 		boost::this_thread::sleep(boost::posix_time::seconds(1));	
 	}
 
-	while (retries < MAX_RETRIES ) {			//Close after 7 retries 
+	while (retries < MAX_RETRIES ) {			//Close after 5 retries 
 
 		time_start = boost::posix_time::microsec_clock::local_time();
 		time_end = boost::posix_time::microsec_clock::local_time();
 		diff = time_end - time_start;
 
-		while (diff.total_milliseconds() < WAIT_TIME ) {			//Limit the data sending rate
+		while (diff.total_milliseconds() < WAIT_TIME ) {			//Limit the data sending rate, Change according to own needs
 			usleep(1);
 			time_end = boost::posix_time::microsec_clock::local_time();
 			diff = time_end - time_start;
 		}
 
-			json_j["type"] = "data";
+			json_j["type"] = "data";								//Example on how a Json message can be created
 			json_j["value"]["timestamp_ms"] = (time(0)*1000);
 
 			while ((retries > 0) && (retries < MAX_RETRIES)) {
@@ -385,18 +379,7 @@ int main(int argc, char *argv[]) {
 			///Cleanup before next iteration, avoid memory leaks///
 			message.clear();
 			json_j.clear();
-			bin_button.reset();
-			bin_button_str.clear();
-			array = {0};
-			delete[] array;
 		}
-		///Delete after each loop, avoid memory leaks///
-		delete[] Acc_Data;
-		delete[] Gyro_Data;
-		delete[] Mag_Data;
-		delete[] Cam_Data;
-		delete[] Button_Data;
-		delete[] trigger;
 
 		if (paused) {
 			boost::this_thread::sleep(boost::posix_time::milliseconds(500)); 		//Wait 500ms then check if we should unpause

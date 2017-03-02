@@ -1,4 +1,4 @@
-##Sending data from PS Move controller to NI Mate using PSMoveApi & websockets
+##Sending data using websockets
 
 ###Project goals
 Simple template that can be used in a project or as a stand-alone program that sends and recieved messages using websokets and Json.
@@ -56,6 +56,20 @@ After all the libraries that we need have been installed, we are ready to build 
 - The compiling can take a couple of minutes on a Raspberry Pi, seconds on a desktop computer.
 - Once the program has been compiled we can run it with the command:
 - `sudo ./psmove_send_poll_data`
+
+####Initial configuration (Windows / Visual Studio), Project Compiles
+
+Download the libraries from Websocket++ and Boost for windows, follow online instructions
+- [Websocket++](https://github.com/zaphoyd/websocketpp/wiki)
+- [Boost](http://www.boost.org/doc/libs/1_62_0/more/getting_started/windows.html)
+- [Nlohmann Json](https://github.com/nlohmann/json), download project, place the json.hpp file into project
+
+Linkoing the libraries in Visual Studio 2015 (Mine look like this)
+- D:\Includes\json-develop;D:\Includes\websocketpp-master;D:\Includes\boost_1_61_0;%(AdditionalIncludeDirectories)
+- D:\Includes\boost_1_61_0\stage\lib;%(AdditionalLibraryDirectories)
+
+In Visual Studio Project properties I also have the following:
+- Preprocessor Definitions: WIN32;_DEBUG;_CONSOLE;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)
 
 ####Using the program
 - Input the IP address and port according to the example on screen and then press _"**enter**"_.
